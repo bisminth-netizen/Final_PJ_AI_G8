@@ -6,6 +6,9 @@
 <title>Agentic RAG · Smart Tourism · Chiang Mai</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Space+Mono:wght@400;700&family=Noto+Serif+Thai:wght@300;400;600&display=swap" rel="stylesheet">
+<!-- Leaflet for interactive map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --ink:#0a0a0a;
@@ -33,11 +36,11 @@ body{
   cursor:none;
 }
 
-/* ── Custom cursor ── */
+/* ── custom cursor ── */
 #cursor{position:fixed;width:12px;height:12px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transition:transform .15s ease,opacity .2s;mix-blend-mode:multiply;}
 #cursor-ring{position:fixed;width:40px;height:40px;border:1.5px solid var(--gold);border-radius:50%;pointer-events:none;z-index:9998;transition:all .25s ease;mix-blend-mode:multiply;}
 
-/* ── Scroll sections ── */
+/* ── scroll sections ── */
 section{
   min-height:100vh;
   scroll-snap-align:start;
@@ -49,7 +52,7 @@ section{
 }
 
 /* ══════════════════════════════════════════
-   SECTION 0 — HERO
+   Section 0 — Hero
 ══════════════════════════════════════════ */
 #hero{
   background:var(--ink);
@@ -146,7 +149,7 @@ section{
 @keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
 
 /* ══════════════════════════════════════════
-   SECTION 1 — THE PROBLEM
+   Section 1 — Problem
 ══════════════════════════════════════════ */
 #problem{
   background:var(--mist);
@@ -210,7 +213,7 @@ section{
 .stat-card .desc{font-size:.75rem;color:#555;margin-top:.5rem;line-height:1.6;}
 
 /* ══════════════════════════════════════════
-   SECTION 2 — SYSTEM PIPELINE
+   Section 2 — System pipeline
 ══════════════════════════════════════════ */
 #pipeline{
   background:var(--ink);
@@ -272,7 +275,6 @@ section{
   border-color:var(--gold);
   box-shadow:0 0 30px rgba(200,151,42,.3);
 }
-/* inline icon spans */
 .icon{display:inline-flex;align-items:center;vertical-align:middle;line-height:1;}
 .icon svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 .pipe-step h3{
@@ -302,7 +304,7 @@ section{
 @keyframes pipePulse{0%,100%{box-shadow:0 0 0 0 rgba(200,151,42,.4);}50%{box-shadow:0 0 0 16px rgba(200,151,42,0);}}
 
 /* ══════════════════════════════════════════
-   SECTION 3 — POI DENSITY MAP
+   Section 3 — POI Density
 ══════════════════════════════════════════ */
 #density{
   background:var(--smoke);
@@ -423,7 +425,213 @@ section{
 .poi-meta span{display:flex;align-items:center;gap:.3rem;}
 
 /* ══════════════════════════════════════════
-   SECTION 4 — SENTIMENT & RAG RESULTS
+   Section 3.5 — Interactive Map (new)
+══════════════════════════════════════════ */
+#map-section{
+  background:var(--paper);
+  flex-direction:column;
+  padding:4rem 2rem;
+}
+#map-section h2{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2rem,4vw,3rem);
+  font-weight:900;
+  text-align:center;
+  margin-bottom:.5rem;
+}
+#map-section h2 em{font-style:italic;color:var(--saffron);}
+#map-section .sub{
+  text-align:center;font-size:.75rem;
+  color:#888;letter-spacing:.08em;margin-bottom:2.5rem;
+}
+.map-layout{
+  display:grid;
+  grid-template-columns:1fr 340px;
+  gap:2rem;
+  max-width:1200px;
+  width:100%;
+  align-items:start;
+}
+@media(max-width:900px){
+  .map-layout{grid-template-columns:1fr;}
+}
+#poi-map{
+  width:100%;
+  height:500px;
+  border-radius:24px;
+  box-shadow:0 20px 40px rgba(0,0,0,.1);
+  border:1px solid rgba(200,151,42,.2);
+  overflow:hidden;
+  z-index:1;
+}
+.map-sidebar{
+  display:flex;
+  flex-direction:column;
+  gap:1rem;
+}
+.map-legend{
+  background:white;
+  border-radius:20px;
+  padding:1.5rem;
+  box-shadow:0 4px 20px rgba(0,0,0,.06);
+}
+.map-legend-title{
+  font-size:.7rem;
+  font-weight:700;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:1rem;
+}
+.legend-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:.75rem;
+  color:#555;
+  margin-bottom:10px;
+}
+.legend-dot-circle{
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+.map-poi-list{
+  background:white;
+  border-radius:20px;
+  box-shadow:0 4px 20px rgba(0,0,0,.06);
+  overflow:hidden;
+}
+.map-poi-list-header{
+  padding:1rem 1.2rem;
+  background:var(--gold);
+  color:white;
+  font-size:.7rem;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.map-poi-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 16px;
+  border-bottom:1px solid #eee;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.map-poi-row:hover{
+  background:rgba(200,151,42,.08);
+}
+.map-poi-row:last-child{border-bottom:none;}
+.poi-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+.poi-name-th{
+  font-size:.8rem;
+  font-weight:700;
+  color:var(--ink);
+}
+.poi-name-en{
+  font-size:.65rem;
+  color:#999;
+}
+.poi-density{
+  font-size:.8rem;
+  font-weight:800;
+  color:var(--gold);
+  margin-left:auto;
+}
+.map-time-badge{
+  background:white;
+  border-radius:20px;
+  padding:1rem 1.2rem;
+  box-shadow:0 4px 20px rgba(0,0,0,.06);
+  font-size:.7rem;
+  color:#666;
+  line-height:1.6;
+}
+.map-time-badge strong{color:var(--saffron);}
+.poi-preview-section{
+  margin-top:2rem;
+  border-top:1px solid rgba(0,0,0,.08);
+  padding-top:1.5rem;
+  display:none;
+}
+.poi-preview-section.active{display:block;}
+.poi-preview-eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:.6rem;
+  font-weight:700;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:.5rem;
+}
+.poi-preview-eyebrow::before{
+  content:'';
+  width:16px;
+  height:2px;
+  background:var(--gold);
+  border-radius:2px;
+}
+.poi-preview-title{
+  font-size:1rem;
+  font-weight:800;
+  color:var(--ink);
+}
+.poi-preview-title-en{
+  font-size:.7rem;
+  color:#888;
+  margin-bottom:.8rem;
+}
+.poi-preview-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+.poi-preview-img-wrap{
+  border-radius:16px;
+  overflow:hidden;
+  aspect-ratio:16/10;
+  background:#ddd;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+  transition:transform .3s ease;
+}
+.poi-preview-img-wrap:hover{transform:translateY(-4px);}
+.poi-preview-img-wrap img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.poi-preview-img-label{
+  display:none;
+}
+@media(max-width:600px){
+  .poi-preview-grid{grid-template-columns:1fr;}
+}
+.leaflet-popup-content-wrapper{
+  border-radius:16px !important;
+  box-shadow:0 8px 32px rgba(0,0,0,.15) !important;
+}
+.leaflet-popup-tip{display:none;}
+.poi-popup{padding:12px 16px;min-width:200px;}
+.poi-popup-name{font-size:.9rem;font-weight:800;color:var(--ink);margin-bottom:2px;}
+.poi-popup-en{font-size:.7rem;color:#888;margin-bottom:10px;}
+.poi-popup-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.poi-popup-stat{background:#f5f0e8;border-radius:12px;padding:8px 10px;text-align:center;}
+.poi-popup-val{font-size:1rem;font-weight:800;color:var(--ink);}
+.poi-popup-lbl{font-size:.6rem;color:#888;text-transform:uppercase;letter-spacing:.05em;}
+
+/* ══════════════════════════════════════════
+   Section 4 — Sentiment & RAG results
 ══════════════════════════════════════════ */
 #sentiment{
   background:var(--ink);
@@ -503,7 +711,7 @@ section{
 .pct-neg{color:#e74c3c;}
 
 /* ══════════════════════════════════════════
-   SECTION 5 — EVALUATION METRICS
+   Section 5 — Evaluation metrics
 ══════════════════════════════════════════ */
 #metrics{
   background:var(--paper);
@@ -576,7 +784,7 @@ section{
 }
 
 /* ══════════════════════════════════════════
-   SECTION 6 — LIVE DEMO MOCKUP
+   Section 6 — Live demo simulation
 ══════════════════════════════════════════ */
 #demo{
   background:var(--smoke);
@@ -672,7 +880,7 @@ section{
 .query-chip:hover,.query-chip.selected{background:var(--gold);color:white;}
 
 /* ══════════════════════════════════════════
-   SECTION 7 — CLOSING
+   Section 7 — Conclusion
 ══════════════════════════════════════════ */
 #closing{
   background:var(--ink);
@@ -728,7 +936,7 @@ section{
 }
 .course-note{font-size:.6rem;color:rgba(245,240,232,.25);letter-spacing:.15em;margin-top:1.5rem;}
 
-/* ── Intersection observer reveal ── */
+/* ── Intersection reveal animations ── */
 .reveal{opacity:0;transform:translateY(30px);transition:opacity .8s ease,transform .8s ease;}
 .reveal.visible{opacity:1;transform:translateY(0);}
 .reveal-delay-1{transition-delay:.15s;}
@@ -736,7 +944,7 @@ section{
 .reveal-delay-3{transition-delay:.45s;}
 .reveal-delay-4{transition-delay:.6s;}
 
-/* ── Nav dots ── */
+/* ── Navigation dots ── */
 #nav-dots{
   position:fixed;right:2rem;top:50%;transform:translateY(-50%);
   display:flex;flex-direction:column;gap:.6rem;z-index:100;
@@ -757,29 +965,30 @@ section{
 <div id="cursor"></div>
 <div id="cursor-ring"></div>
 
-<!-- Nav dots -->
+<!-- Navigation dots -->
 <nav id="nav-dots">
   <div class="nav-dot active" data-target="hero" title="Hero"></div>
   <div class="nav-dot" data-target="problem" title="Problem"></div>
   <div class="nav-dot" data-target="pipeline" title="Pipeline"></div>
   <div class="nav-dot" data-target="density" title="POI Density"></div>
+  <div class="nav-dot" data-target="map-section" title="Map"></div>
   <div class="nav-dot" data-target="sentiment" title="Sentiment"></div>
   <div class="nav-dot" data-target="metrics" title="Metrics"></div>
   <div class="nav-dot" data-target="demo" title="Demo"></div>
   <div class="nav-dot" data-target="closing" title="Conclusion"></div>
 </nav>
 
-<!-- ══ HERO ══════════════════════════════════════ -->
+<!-- ══ Hero section ══════════════════════════════════════ -->
 <section id="hero">
   <div class="hero-noise"></div>
   <div class="hero-grid"></div>
   <div class="hero-orb orb1"></div>
   <div class="hero-orb orb2"></div>
   <div class="hero-inner">
-    <p class="hero-eyebrow">Final Project Artificial Intelligence and Large Models</p>
+    <p class="hero-eyebrow">AI & Large Models · Final Project</p>
     <h1 class="hero-title">
       <em>Agentic RAG</em>
-      for Smart Tourism
+      Empowering Smart Tourism
       <span>Chiang Mai, Thailand</span>
     </h1>
     <p class="hero-sub">Boonyoros Pheechaphuth · LS2525207 &nbsp;|&nbsp; Teh Bismin · LS2525222</p>
@@ -796,68 +1005,68 @@ section{
   </div>
 </section>
 
-<!-- ══ PROBLEM ════════════════════════════════════ -->
+<!-- ══ Problem section ════════════════════════════════════ -->
 <section id="problem">
   <div class="problem-layout">
     <div class="problem-text reveal">
-      <p class="section-label">01 · The Problem</p>
-      <h2>Overtourism is <em>silently eroding</em> Chiang Mai's heritage</h2>
-      <p>Chiang Mai receives millions of visitors annually, yet no intelligent system existed to synthesise crowd data, visitor sentiment, and spatial intelligence into actionable guidance.</p>
-      <p>We built an <strong>Agentic RAG system</strong> that combines GNSS trajectory analysis, YouTube sentiment mining, and LLM reasoning to answer overtourism queries with real spatial context.</p>
+      <p class="section-label">01 · Pain Point</p>
+      <h2>Overtourism is <em>eroding</em> Chiang Mai's heritage</h2>
+      <p>Chiang Mai receives millions of tourists annually, yet no intelligent system integrates crowd data, visitor sentiment, and spatial intelligence to provide actionable guidance.</p>
+      <p>We built an <strong>Agentic RAG system</strong> that fuses GNSS trajectory analysis, YouTube sentiment mining, and LLM reasoning to answer overtourism-related questions with real spatial context.</p>
     </div>
     <div class="stat-stack">
       <div class="stat-card very-high reveal reveal-delay-1">
         <div class="num">0.92</div>
-        <div class="label">Highest GPS Density — Sunday Walking Street</div>
-        <div class="desc">420 simulated GPS tracks · 90 min avg dwell · Very High overtourism risk</div>
+        <div class="label">Highest GPS density — Sunday Walking Street</div>
+        <div class="desc">420 simulated GPS traces · avg dwell 90 min · extreme overtourism risk</div>
       </div>
       <div class="stat-card high reveal reveal-delay-2">
-        <div class="num">4 of 24</div>
-        <div class="label">POIs at High / Very-High Risk</div>
-        <div class="desc">Wat Doi Suthep, Sunday Walking Street, Night Bazaar, Wat Phra Singh</div>
+        <div class="num">4 / 24</div>
+        <div class="label">High / Very high risk POIs count</div>
+        <div class="desc">Doi Suthep, Sunday Walking Street, Night Bazaar, Wat Phra Singh</div>
       </div>
       <div class="stat-card medium reveal reveal-delay-3">
         <div class="num">78.9%</div>
-        <div class="label">Hit Rate @5 — RAG Retrieval Quality</div>
-        <div class="desc">Exceeds the 75% target across 38-query evaluation set · FAISS cosine similarity</div>
+        <div class="label">Hit Rate @5 — RAG retrieval quality</div>
+        <div class="desc">Exceeds 75% target on 38 query eval set · FAISS cosine similarity</div>
       </div>
       <div class="stat-card low reveal reveal-delay-4">
         <div class="num">$0.00</div>
-        <div class="label">Total Project Cost</div>
-        <div class="desc">Free stack: YouTube API · Groq · HuggingFace local models · FAISS</div>
+        <div class="label">Total project cost</div>
+        <div class="desc">100% free stack: YouTube API · Groq · HuggingFace local models · FAISS</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ══ PIPELINE ═══════════════════════════════════ -->
+<!-- ══ Pipeline section ═══════════════════════════════════ -->
 <section id="pipeline">
   <div style="width:100%;max-width:1100px;">
     <p class="section-label" style="text-align:center;">02 · System Architecture</p>
-    <h2>A four-step intelligent pipeline</h2>
-    <p class="sub">From raw data to agentic answers — every component open-source & free</p>
+    <h2>Four-step intelligent pipeline</h2>
+    <p class="sub">From raw data to agentic answers — fully open-source and free</p>
     <div class="pipeline-flow">
       <div class="pipe-step reveal" onclick="highlightPipe(this)">
         <div class="pipe-icon"><svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
         <h3>Step 1</h3>
-        <p>YouTube Data API · 8 POI queries · English + place-relevance filters · cardiffnlp XLM-RoBERTa sentiment</p>
+        <p>YouTube Data API · 8 POI queries · English + location filtering · cardiffnlp XLM-RoBERTa sentiment model</p>
         <div class="pipe-tag">sentiment_data.csv</div>
       </div>
       <div class="pipe-step reveal reveal-delay-1" onclick="highlightPipe(this)">
         <div class="pipe-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg></div>
         <h3>Step 2</h3>
-        <p>OSM GPS Trackpoints · Correlated Random Walk simulation · DBSCAN ε=0.002° · Speed filter 150 km/h</p>
+        <p>OSM GPS points · correlated random walk simulation · DBSCAN ε=0.002° · speed filter 150 km/h</p>
         <div class="pipe-tag">hotspots.geojson</div>
       </div>
       <div class="pipe-step reveal reveal-delay-2" onclick="highlightPipe(this)">
         <div class="pipe-icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg></div>
         <h3>Step 3</h3>
-        <p>Sentence Transformer 384-d · FAISS IndexFlatIP cosine · 38-query evaluation · Hit Rate @5 = 78.9%</p>
+        <p>Sentence Transformer 384-dim · FAISS IndexFlatIP cosine · 38 query eval · Hit Rate @5 = 78.9%</p>
         <div class="pipe-tag">faiss.index</div>
       </div>
       <div class="pipe-step reveal reveal-delay-3 active-step" onclick="highlightPipe(this)">
         <div class="pipe-icon"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
-        <h3>App</h3>
+        <h3>Application</h3>
         <p>Groq LLaMA 3.1 8B · ReAct agent loop · 4 tools: get_hotspot, get_sentiment, search_poi, rag_retrieve</p>
         <div class="pipe-tag">streamlit run app.py</div>
       </div>
@@ -865,24 +1074,116 @@ section{
   </div>
 </section>
 
-<!-- ══ DENSITY ════════════════════════════════════ -->
+<!-- ══ Density section ════════════════════════════════════ -->
 <section id="density">
   <div style="width:100%;max-width:1100px;">
     <p class="section-label" style="text-align:center;">03 · GPS Density Analysis</p>
-    <h2>24 POIs ranked by <em>crowd density</em></h2>
-    <p class="sub">DBSCAN-derived density scores · data from config_pois.json + step2_gps.py simulation</p>
+    <h2><em>Crowd density</em> ranking of 24 POIs</h2>
+    <p class="sub">DBSCAN-based density scores · data from config_pois.json + step2_gps.py simulation</p>
     <div class="filter-row">
       <button class="filter-btn all active" onclick="filterPOIs('all',this)">All POIs</button>
-      <button class="filter-btn very_high" onclick="filterPOIs('very_high',this)">Very High Risk</button>
-      <button class="filter-btn high" onclick="filterPOIs('high',this)">High Risk</button>
-      <button class="filter-btn medium" onclick="filterPOIs('medium',this)">Medium Risk</button>
-      <button class="filter-btn low" onclick="filterPOIs('low',this)">Low Risk</button>
+      <button class="filter-btn very_high" onclick="filterPOIs('very_high',this)">Very high risk</button>
+      <button class="filter-btn high" onclick="filterPOIs('high',this)">High risk</button>
+      <button class="filter-btn medium" onclick="filterPOIs('medium',this)">Medium risk</button>
+      <button class="filter-btn low" onclick="filterPOIs('low',this)">Low risk</button>
     </div>
     <div class="poi-grid" id="poiGrid"></div>
   </div>
 </section>
 
-<!-- ══ SENTIMENT ══════════════════════════════════ -->
+<!-- ══ Interactive map section ═══════════════════════════ -->
+<section id="map-section">
+  <div style="width:100%;max-width:1200px;">
+    <p class="section-label" style="text-align:center;">03.5 · Spatial Intelligence</p>
+    <h2>GPS Hotspots <span style="font-style:italic;color:var(--saffron);">Interactive Map</span></h2>
+    <p class="sub">Leaflet-based visualization · Click markers for detailed stats</p>
+    
+    <div class="map-layout">
+      <div id="poi-map"></div>
+
+      <div class="map-sidebar">
+        <div class="map-legend reveal">
+          <div class="map-legend-title">Density levels</div>
+          <div class="legend-row">
+            <div class="legend-dot-circle" style="background:#e03939;"></div>
+            <span>High risk (&gt;80%) — extreme density</span>
+          </div>
+          <div class="legend-row">
+            <div class="legend-dot-circle" style="background:#c8972a;"></div>
+            <span>Medium risk (60–80%) — moderate density</span>
+          </div>
+          <div class="legend-row">
+            <div class="legend-dot-circle" style="background:#2d6a4f;"></div>
+            <span>Low risk (&lt;60%) — low density</span>
+          </div>
+        </div>
+
+        <div class="map-poi-list reveal reveal-delay-1">
+          <div class="map-poi-list-header">TOP 8 by density</div>
+          <div class="map-poi-row" data-poi-idx="0">
+            <div class="poi-dot" style="background:#e03939;"></div>
+            <div><div class="poi-name-th">Sunday Walking Street</div><div class="poi-name-en">Sunday Walking Street</div></div>
+            <div class="poi-density">92%</div>
+          </div>
+          <div class="map-poi-row" data-poi-idx="1">
+            <div class="poi-dot" style="background:#e03939;"></div>
+            <div><div class="poi-name-th">Wat Doi Suthep</div><div class="poi-name-en">Doi Suthep Temple</div></div>
+            <div class="poi-density">88%</div>
+          </div>
+          <div class="map-poi-row" data-poi-idx="2">
+            <div class="poi-dot" style="background:#e03939;"></div>
+            <div><div class="poi-name-th">Wat Phra Singh</div><div class="poi-name-en">Phra Singh Temple</div></div>
+            <div class="poi-density">85%</div>
+          </div>
+          <div class="map-poi-row" data-poi-idx="3">
+            <div class="poi-dot" style="background:#e03939;"></div>
+            <div><div class="poi-name-th">Wat Chedi Luang</div><div class="poi-name-en">Chedi Luang Temple</div></div>
+            <div class="poi-density">80%</div>
+          </div>
+          <div class="map-poi-row" data-poi-idx="4">
+            <div class="poi-dot" style="background:#c8972a;"></div>
+            <div><div class="poi-name-th">Nimmanhaemin Road</div><div class="poi-name-en">Nimman Road</div></div>
+            <div class="poi-density">75%</div>
+          </div>
+          <div class="map-poi-row" data-poi-idx="5">
+            <div class="poi-dot" style="background:#e03939;"></div>
+            <div><div class="poi-name-th">Night Bazaar</div><div class="poi-name-en">Night Bazaar</div></div>
+            <div class="poi-density">78%</div>
+          </div>
+          <div class="map-poi-row" data-poi-idx="6">
+            <div class="poi-dot" style="background:#c8972a;"></div>
+            <div><div class="poi-name-th">Tha Phae Gate</div><div class="poi-name-en">Tha Phae Gate</div></div>
+            <div class="poi-density">72%</div>
+          </div>
+          <div class="map-poi-row" data-poi-idx="7">
+            <div class="poi-dot" style="background:#c8972a;"></div>
+            <div><div class="poi-name-th">Doi Inthanon National Park</div><div class="poi-name-en">Doi Inthanon</div></div>
+            <div class="poi-density">65%</div>
+          </div>
+        </div>
+
+        <div class="map-time-badge reveal reveal-delay-2">
+          <strong>💡 Travel tip</strong><br>
+          Peak hours vary: Night markets 17:00–22:00 · Temples 07:00–12:00.<br>
+          Click map markers or the side list to see details and real-life photos.
+        </div>
+      </div>
+    </div>
+
+    <div class="poi-preview-section" id="poi-preview-section">
+      <div class="poi-preview-eyebrow">📍 Photo preview</div>
+      <div class="poi-preview-title" id="poi-preview-title"></div>
+      <div class="poi-preview-title-en" id="poi-preview-title-en"></div>
+      <div class="poi-preview-grid" id="poi-preview-grid">
+        <div class="poi-preview-img-wrap"><img id="poi-img-0" src="" alt="Photo 1" loading="lazy" onerror="this.src='https://placehold.co/400x240/2d6a4f/f5f0e8?text=Chiang+Mai'"></div>
+        <div class="poi-preview-img-wrap"><img id="poi-img-1" src="" alt="Photo 2" loading="lazy" onerror="this.src='https://placehold.co/400x240/c8972a/f5f0e8?text=Temple+View'"></div>
+        <div class="poi-preview-img-wrap"><img id="poi-img-2" src="" alt="Photo 3" loading="lazy" onerror="this.src='https://placehold.co/400x240/e07b39/f5f0e8?text=Chiang+Mai+Night'"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ Sentiment section ══════════════════════════════════ -->
 <section id="sentiment">
   <div class="sent-layout">
     <div class="sent-left reveal">
@@ -891,22 +1192,19 @@ section{
       <div class="donut-wrap">
         <svg viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="38" fill="none" stroke="#1a1a1a" stroke-width="18"/>
-          <!-- Positive 62% -->
           <circle cx="50" cy="50" r="38" fill="none" stroke="#40916c" stroke-width="18"
             stroke-dasharray="148.6 238.8" stroke-dashoffset="0" transform="rotate(-90 50 50)"
             style="transition:stroke-dasharray 1.5s ease;"/>
-          <!-- Neutral 24% -->
           <circle cx="50" cy="50" r="38" fill="none" stroke="#c8972a" stroke-width="18"
             stroke-dasharray="57.3 330.1" stroke-dashoffset="-148.6" transform="rotate(-90 50 50)"
             style="transition:stroke-dasharray 1.5s ease 0.3s;"/>
-          <!-- Negative 14% -->
           <circle cx="50" cy="50" r="38" fill="none" stroke="#c0392b" stroke-width="18"
             stroke-dasharray="33.4 354" stroke-dashoffset="-205.9" transform="rotate(-90 50 50)"
             style="transition:stroke-dasharray 1.5s ease 0.6s;"/>
         </svg>
         <div class="donut-center">
           <div class="donut-num">62%</div>
-          <div class="donut-lbl">Positive</div>
+          <div class="donut-lbl">positive</div>
         </div>
       </div>
       <div class="legend-row"><div class="legend-dot" style="background:#40916c;"></div><span class="legend-text">Positive reviews</span><span class="legend-pct">62%</span></div>
@@ -920,23 +1218,23 @@ section{
   </div>
 </section>
 
-<!-- ══ METRICS ════════════════════════════════════ -->
+<!-- ══ Metrics section ════════════════════════════════════ -->
 <section id="metrics">
   <div style="width:100%;max-width:1100px;">
     <p class="section-label" style="text-align:center;">05 · Evaluation Results</p>
-    <h2>Exceeding targets on <em>retrieval & efficiency</em></h2>
-    <p class="sub">38-query evaluation set · paraphrase-multilingual-MiniLM-L12-v2 embeddings · Groq LLaMA 3.1 8B</p>
+    <h2>Retrieval & efficiency <em>beyond targets</em></h2>
+    <p class="sub">38 query evaluation set · paraphrase-multilingual-MiniLM-L12-v2 embeddings · Groq LLaMA 3.1 8B</p>
     <div class="metrics-layout">
       <div class="metric-panel reveal">
-        <h3>RAG Retrieval Quality</h3>
+        <h3>RAG retrieval quality</h3>
         <div class="hit-rates" id="hitRates"></div>
-        <div class="hit-target"><span class="icon" style="margin-right:.3rem;"><svg viewBox="0 0 24 24" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg></span>Target Met &nbsp;·&nbsp; Hit Rate @5 ≥ 0.75 (proposal §4 O2)</div>
+        <div class="hit-target"><span class="icon" style="margin-right:.3rem;"><svg viewBox="0 0 24 24" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg></span>Target achieved · Hit Rate @5 ≥ 0.75 (proposal §4 O2)</div>
       </div>
       <div class="metric-panel reveal reveal-delay-2">
-        <h3>Token Economics (RQ3)</h3>
+        <h3>Token economics (RQ3)</h3>
         <div class="token-compare">
           <div class="token-col">
-            <div class="token-col-label">Plain RAG</div>
+            <div class="token-col-label">Vanilla RAG</div>
             <div class="token-bubble plain">
               <div class="tnum">430</div>
               <div class="tlbl">tokens/query</div>
@@ -962,22 +1260,22 @@ section{
             </div>
           </div>
         </div>
-        <div class="token-win"><span class="icon" style="margin-right:.3rem;"><svg viewBox="0 0 24 24" width="14" height="14"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>Agentic RAG costs 1.7× more tokens but achieves 78.9% Hit Rate @5</div>
+        <div class="token-win"><span class="icon" style="margin-right:.3rem;"><svg viewBox="0 0 24 24" width="14" height="14"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>Agentic RAG uses 1.7x more tokens but achieves Hit Rate @5 = 78.9%</div>
       </div>
       <div class="metric-panel reveal reveal-delay-1" style="grid-column:1/-1;">
-        <h3>Per-Category Hit Rate @5</h3>
+        <h3>Hit Rate @5 by category</h3>
         <div id="catBars" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;margin-top:.5rem;"></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ══ DEMO ═══════════════════════════════════════ -->
+<!-- ══ Demo section ═══════════════════════════════════════ -->
 <section id="demo">
   <div style="width:100%;max-width:700px;display:flex;flex-direction:column;align-items:center;gap:1.5rem;">
-    <p class="section-label" style="text-align:center;">06 · Agentic RAG in Action</p>
-    <h2 style="text-align:center;">Watch the <em>ReAct loop</em> work</h2>
-    <p class="sub">Click a query below to see how the agent reasons, calls tools, and answers</p>
+    <p class="section-label" style="text-align:center;">06 · Agentic RAG in action</p>
+    <h2 style="text-align:center;">Watch the <em>ReAct loop</em> at work</h2>
+    <p class="sub">Click a query below to see the agent reason, call tools, and answer</p>
     <div class="chat-queries" id="queryChips"></div>
     <div class="chat-demo">
       <div class="chat-topbar">
@@ -987,46 +1285,49 @@ section{
         <span class="chat-title">Chiang Mai Smart Tourism AI · LLaMA 3.1 8B</span>
       </div>
       <div class="chat-body" id="chatBody">
-        <div class="msg bot">สวัสดีครับ! I'm your Chiang Mai tourism assistant.<br>Ask me about crowd levels, sentiment, or where to visit. <span class="icon"><svg viewBox="0 0 24 24" width="16" height="16"><rect x="3" y="10" width="18" height="11"/><path d="M3 10V6h3V3h3v3h3V3h3v3h3v4"/><line x1="9" y1="21" x2="9" y2="15"/><line x1="15" y1="21" x2="15" y2="15"/></svg></span></div>
+        <div class="msg bot">สวัสดีครับ! I'm your Chiang Mai travel assistant.<br>Ask me about crowd density, visitor reviews, or place recommendations. <span class="icon"><svg viewBox="0 0 24 24" width="16" height="16"><rect x="3" y="10" width="18" height="11"/><path d="M3 10V6h3V3h3v3h3V3h3v3h3v4"/><line x1="9" y1="21" x2="9" y2="15"/><line x1="15" y1="21" x2="15" y2="15"/></svg></span></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ══ CLOSING ════════════════════════════════════ -->
+<!-- ══ Conclusion section ════════════════════════════════════ -->
 <section id="closing">
   <div class="hero-orb orb1" style="opacity:.5;"></div>
   <div class="hero-orb orb2" style="opacity:.5;"></div>
   <div class="closing-inner">
     <p class="section-label">07 · Conclusion</p>
-    <h2>Three questions.<br><em>One agentic answer.</em></h2>
+    <h2>Three research questions.<br><em>One agentic answer.</em></h2>
     <div class="rq-grid">
       <div class="rq-card reveal">
         <div class="rq-num">Research Question 1</div>
-        <div class="rq-q">"Can Agentic RAG answer overtourism queries accurately?"</div>
+        <div class="rq-q">"Can agentic RAG accurately answer overtourism-related questions?"</div>
         <div class="rq-a"><span class="icon" style="margin-right:.2rem;"><svg viewBox="0 0 24 24" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg></span>Sentiment Hit Rate @5 = 0.750 · Overall = 0.789</div>
       </div>
       <div class="rq-card reveal reveal-delay-1">
         <div class="rq-num">Research Question 2</div>
-        <div class="rq-q">"Does GNSS density improve crowd-level answers?"</div>
-        <div class="rq-a"><span class="icon" style="margin-right:.2rem;"><svg viewBox="0 0 24 24" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg></span>Crowd category Hit Rate @5 = 0.800 · Highest category</div>
+        <div class="rq-q">"Does GNSS density improve crowd congestion answers?"</div>
+        <div class="rq-a"><span class="icon" style="margin-right:.2rem;"><svg viewBox="0 0 24 24" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg></span>Crowd congestion category Hit Rate @5 = 0.800 · highest category</div>
       </div>
       <div class="rq-card reveal reveal-delay-2">
         <div class="rq-num">Research Question 3</div>
-        <div class="rq-q">"What is the token cost of Agentic vs Plain RAG?"</div>
-        <div class="rq-a"><span class="icon" style="margin-right:.2rem;"><svg viewBox="0 0 24 24" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg></span>1.7× tokens · $0.000037/query · within free tier limits</div>
+        <div class="rq-q">"What is the token cost of agentic RAG vs vanilla RAG?"</div>
+        <div class="rq-a"><span class="icon" style="margin-right:.2rem;"><svg viewBox="0 0 24 24" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg></span>1.7x tokens · $0.000037/query · within free tier</div>
       </div>
     </div>
     <div class="team-credits">
       <div class="team-credit">Boonyoros Pheechaphuth · LS2525207</div>
       <div class="team-credit">Teh Bismin · LS2525222</div>
     </div>
-    <p class="course-note">Final Project Artificial Intelligence and Large Models · Agentic RAG for Smart Tourism · Chiang Mai, Thailand</p>
+    <p class="course-note">AI & Large Models Final Project · Agentic RAG for Smart Tourism · Chiang Mai, Thailand</p>
   </div>
 </section>
 
 <script>
-/* ══ SVG ICON HELPERS ══ */
+/* ──────────────────────────────────────────────
+   Original functions: POI cards, sentiment, metrics, etc.
+   (all logic unchanged, only UI text translated)
+   ────────────────────────────────────────────── */
 const IC = {
   mapPin:'<span class="icon"><svg viewBox="0 0 24 24" width="13" height="13"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>',
   clock:'<span class="icon"><svg viewBox="0 0 24 24" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>',
@@ -1039,35 +1340,35 @@ const IC = {
   gear:'<span class="tool-icon"><svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>',
 };
 
-/* ══ POI DATA (from config_pois.json) ══ */
+/* POI data (from config_pois.json) */
 const POIS = [
-  {name:"Sunday Walking Street",cat:"Market / Walking Street",density:0.92,risk:"very_high",dwell:90,tracks:420},
-  {name:"Wat Doi Suthep",cat:"Temple / Heritage",density:0.88,risk:"high",dwell:60,tracks:320},
-  {name:"Wat Phra Singh",cat:"Temple / Heritage",density:0.85,risk:"high",dwell:45,tracks:280},
-  {name:"Wat Chedi Luang",cat:"Temple / Heritage",density:0.80,risk:"high",dwell:40,tracks:250},
-  {name:"Nimmanhaemin Road",cat:"Café & Dining District",density:0.75,risk:"medium",dwell:120,tracks:350},
-  {name:"Night Bazaar",cat:"Market / Shopping",density:0.78,risk:"high",dwell:75,tracks:290},
-  {name:"Warorot Market",cat:"Local Market",density:0.70,risk:"medium",dwell:50,tracks:200},
-  {name:"Tha Phae Gate",cat:"Historic Gate",density:0.72,risk:"medium",dwell:30,tracks:260},
-  {name:"Chiang Mai Zoo",cat:"Zoo / Family",density:0.68,risk:"medium",dwell:150,tracks:210},
-  {name:"Doi Inthanon National Park",cat:"National Park",density:0.65,risk:"medium",dwell:180,tracks:180},
-  {name:"Central Festival",cat:"Shopping Mall",density:0.65,risk:"medium",dwell:120,tracks:195},
-  {name:"Maya Lifestyle Mall",cat:"Shopping Mall",density:0.70,risk:"medium",dwell:90,tracks:230},
-  {name:"Suan Dok Temple",cat:"Temple / Heritage",density:0.60,risk:"low",dwell:35,tracks:150},
-  {name:"Royal Flora Ratchaphruek",cat:"Botanical Garden",density:0.60,risk:"low",dwell:120,tracks:160},
-  {name:"Wat Umong",cat:"Temple / Meditation",density:0.52,risk:"low",dwell:50,tracks:140},
-  {name:"Chiang Mai Night Safari",cat:"Wildlife / Night",density:0.55,risk:"low",dwell:120,tracks:130},
-  {name:"Doi Pui Tribal Village",cat:"Cultural Village",density:0.55,risk:"low",dwell:75,tracks:120},
-  {name:"Wat Chiang Man",cat:"Temple / Heritage",density:0.55,risk:"low",dwell:30,tracks:130},
-  {name:"Baan Tawai Crafts",cat:"Handicrafts Village",density:0.58,risk:"low",dwell:90,tracks:145},
-  {name:"Ang Kaew Reservoir",cat:"Park / Recreation",density:0.50,risk:"low",dwell:45,tracks:120},
-  {name:"Wat Doi Kham",cat:"Temple / Heritage",density:0.45,risk:"low",dwell:40,tracks:110},
-  {name:"Mae Kampong Village",cat:"Eco-Tourism",density:0.48,risk:"low",dwell:180,tracks:90},
-  {name:"San Kamphaeng Hot Springs",cat:"Natural Thermal",density:0.42,risk:"low",dwell:120,tracks:80},
-  {name:"Chiang Mai Arts & Cultural Centre",cat:"Museum",density:0.40,risk:"low",dwell:60,tracks:85},
+  {name:"Sunday Walking Street",cat:"Market / Walking Street",density:0.92,risk:"very_high",dwell:90,tracks:420,lat:18.7882,lng:98.9853,time:"17:00–22:00",sentiment:57,reviews:7},
+  {name:"Wat Doi Suthep",cat:"Temple / Heritage",density:0.88,risk:"high",dwell:60,tracks:320,lat:18.8048,lng:98.9220,time:"07:00–10:00",sentiment:50,reviews:6},
+  {name:"Wat Phra Singh",cat:"Temple / Heritage",density:0.85,risk:"high",dwell:45,tracks:280,lat:18.7878,lng:98.9836,time:"09:00–12:00",sentiment:57,reviews:7},
+  {name:"Wat Chedi Luang",cat:"Temple / Heritage",density:0.80,risk:"high",dwell:40,tracks:250,lat:18.7874,lng:98.9854,time:"08:00–11:00",sentiment:75,reviews:4},
+  {name:"Nimmanhaemin Road",cat:"Café & Dining",density:0.75,risk:"medium",dwell:120,tracks:350,lat:18.7975,lng:98.9665,time:"18:00–22:00",sentiment:80,reviews:5},
+  {name:"Night Bazaar",cat:"Market / Shopping",density:0.78,risk:"high",dwell:75,tracks:290,lat:18.7827,lng:99.0000,time:"18:00–23:00",sentiment:75,reviews:4},
+  {name:"Warorot Market",cat:"Local Market",density:0.70,risk:"medium",dwell:50,tracks:200,lat:18.7921,lng:98.9960,time:"06:00–18:00",sentiment:65,reviews:4},
+  {name:"Tha Phae Gate",cat:"Historic Gate",density:0.72,risk:"medium",dwell:30,tracks:260,lat:18.7884,lng:98.9937,time:"09:00–20:00",sentiment:100,reviews:4},
+  {name:"Chiang Mai Zoo",cat:"Zoo / Family",density:0.68,risk:"medium",dwell:150,tracks:210,lat:18.8036,lng:98.9518,time:"09:00–17:00",sentiment:72,reviews:3},
+  {name:"Doi Inthanon National Park",cat:"National Park",density:0.65,risk:"medium",dwell:180,tracks:180,lat:18.5877,lng:98.4866,time:"07:00–16:00",sentiment:66,reviews:6},
+  {name:"Central Festival Chiang Mai",cat:"Shopping Mall",density:0.65,risk:"medium",dwell:120,tracks:195,lat:18.7993,lng:98.9697,time:"11:00–21:00",sentiment:62,reviews:3},
+  {name:"MAYA Lifestyle Shopping Center",cat:"Shopping Mall",density:0.70,risk:"medium",dwell:90,tracks:230,lat:18.7970,lng:98.9720,time:"11:00–21:00",sentiment:68,reviews:3},
+  {name:"Wat Suan Dok",cat:"Temple / Heritage",density:0.60,risk:"low",dwell:35,tracks:150,lat:18.7872,lng:98.9696,time:"08:00–17:00",sentiment:72,reviews:3},
+  {name:"Royal Park Rajapruek",cat:"Botanical Garden",density:0.60,risk:"low",dwell:120,tracks:160,lat:18.7545,lng:98.9325,time:"08:00–18:00",sentiment:70,reviews:3},
+  {name:"Wat Umong",cat:"Temple / Meditation",density:0.52,risk:"low",dwell:50,tracks:140,lat:18.7797,lng:98.9567,time:"08:00–17:00",sentiment:70,reviews:4},
+  {name:"Chiang Mai Night Safari",cat:"Wildlife / Night",density:0.55,risk:"low",dwell:120,tracks:130,lat:18.7402,lng:98.9750,time:"18:00–23:00",sentiment:68,reviews:3},
+  {name:"Doi Pui Hmong Village",cat:"Cultural Village",density:0.55,risk:"low",dwell:75,tracks:120,lat:18.8230,lng:98.9090,time:"08:00–17:00",sentiment:66,reviews:3},
+  {name:"Wat Chiang Man",cat:"Temple / Heritage",density:0.55,risk:"low",dwell:30,tracks:130,lat:18.7937,lng:98.9870,time:"08:00–17:00",sentiment:73,reviews:3},
+  {name:"Baan Tawai Wood Carving Village",cat:"Handicraft Village",density:0.58,risk:"low",dwell:90,tracks:145,lat:18.7030,lng:98.9500,time:"08:00–17:00",sentiment:74,reviews:3},
+  {name:"Ang Kaew Reservoir",cat:"Park / Leisure",density:0.50,risk:"low",dwell:45,tracks:120,lat:18.7580,lng:98.9570,time:"06:00–18:00",sentiment:68,reviews:3},
+  {name:"Wat Doi Kham",cat:"Temple / Heritage",density:0.45,risk:"low",dwell:40,tracks:110,lat:18.7510,lng:98.9290,time:"08:00–17:00",sentiment:70,reviews:3},
+  {name:"Mae Kampong Village",cat:"Eco-tourism",density:0.48,risk:"low",dwell:180,tracks:90,lat:18.6700,lng:99.1000,time:"All day",sentiment:80,reviews:3},
+  {name:"San Kamphaeng Hot Springs",cat:"Hot Spring",density:0.42,risk:"low",dwell:120,tracks:80,lat:18.7450,lng:99.1500,time:"08:00–18:00",sentiment:78,reviews:3},
+  {name:"Chiang Mai Art & Cultural Center",cat:"Museum",density:0.40,risk:"low",dwell:60,tracks:85,lat:18.7885,lng:98.9860,time:"09:00–17:00",sentiment:68,reviews:3},
 ];
 
-/* ══ SENTIMENT DATA (from step1_youtube.py curated) ══ */
+/* Sentiment data (from step1_youtube.py) */
 const SENTIMENT_POIS = [
   {name:"Sunday Walking Street",pos:71,neu:18,neg:11},
   {name:"Wat Doi Suthep",pos:65,neu:20,neg:15},
@@ -1079,7 +1380,7 @@ const SENTIMENT_POIS = [
   {name:"Doi Inthanon National Park",pos:78,neu:14,neg:8},
 ];
 
-/* ══ EVALUATION DATA (from step3_rag.py + README) ══ */
+/* Evaluation data */
 const HIT_RATES = [
   {k:"@1",val:.526,label:"Hit Rate @1"},
   {k:"@3",val:.684,label:"Hit Rate @3"},
@@ -1087,40 +1388,44 @@ const HIT_RATES = [
   {k:"MRR",val:.712,label:"MRR"},
 ];
 const CAT_RATES = [
-  {cat:"Crowd / GPS",rate:.800},{cat:"Travel Tips",rate:.833},
-  {cat:"Seasonal",rate:.800},{cat:"Research",rate:.875},
+  {cat:"Crowd / GPS",rate:.800},{cat:"Travel tips",rate:.833},
+  {cat:"Seasonality",rate:.800},{cat:"Research",rate:.875},
   {cat:"Sentiment",rate:.750},{cat:"Food",rate:.667},
 ];
 
-/* ══ DEMO SCENARIOS ══ */
+/* Demo scenarios (English) */
 const DEMO_SCENARIOS = {
-  "Is Wat Doi Suthep crowded?":[
+  "Is Wat Doi Suthep crowded right now?":[
     {type:"user",text:"Is Wat Doi Suthep crowded right now?"},
     {type:"tool",text:'get_hotspot("Wat Doi Suthep")'},
-    {type:"bot",text:`${IC.mapPin} <strong>Wat Doi Suthep</strong><br>GPS Density: <strong>0.88 / 1.00</strong> · Crowd Level: <strong>High Density</strong><br>Avg Dwell: 60 min · 320 GPS tracks · Peak: 07:00–10:00<br><br>${IC.alertCircle} Overtourism risk: <strong>high</strong>. Recommend visiting outside peak hours.`},
+    {type:"bot",text:`${IC.mapPin} <strong>Wat Doi Suthep</strong><br>GPS density: <strong>0.88 / 1.00</strong> · Crowding level: <strong>High density</strong><br>Average dwell: 60 min · 320 traces · Peak hours: 07:00–10:00<br><br>${IC.alertCircle} Overtourism risk: <strong>High</strong>. Consider visiting outside peak hours.`},
   ],
-  "Best uncrowded temple?":[
-    {type:"user",text:"Which temples are least crowded?"},
+  "Which temple is least crowded?":[
+    {type:"user",text:"Which temple is least crowded?"},
     {type:"tool",text:'search_poi("temple")'},
-    {type:"tool",text:'rag_retrieve("least crowded temple Chiang Mai")'},
-    {type:"bot",text:`${IC.building} Least-crowded temples:<br><strong>1. Wat Doi Kham</strong> — density 0.45 (Low) · local devotees only<br><strong>2. Wat Umong</strong> — density 0.52 (Low) · meditation forest temple<br><strong>3. Wat Chiang Man</strong> — density 0.55 (Low) · oldest temple, founded 1296 AD<br><br>${IC.check} All three are comfortable to visit at most times of day.`},
+    {type:"tool",text:'rag_retrieve("Chiang Mai low crowd temple")'},
+    {type:"bot",text:`${IC.building} Less crowded temple recommendations:<br><strong>1. Wat Doi Kham</strong> — density 0.45 (low) · mostly local devotees<br><strong>2. Wat Umong</strong> — density 0.52 (low) · forest meditation temple<br><strong>3. Wat Chiang Man</strong> — density 0.55 (low) · oldest temple, built 1296<br><br>${IC.check} These three are comfortable to visit most of the time.`},
   ],
-  "Sentiment at Night Bazaar?":[
-    {type:"user",text:"What do tourists say about Night Bazaar?"},
+  "What do visitors say about Night Bazaar?":[
+    {type:"user",text:"What do visitors say about Night Bazaar?"},
     {type:"tool",text:'get_sentiment("Night Bazaar")'},
     {type:"tool",text:'get_hotspot("Night Bazaar")'},
-    {type:"bot",text:`${IC.msgSquare} <strong>Night Bazaar Sentiment Report</strong><br>Reviews analysed: 290 GPS tracks · 55% Positive / 25% Neutral / 20% Negative<br><br>${IC.thumbsUp} Top positive: <em>'The bazaar retains real charm despite its commercial nature'</em><br>${IC.alertTri} Top concern: <em>'Aggressive touts near the main entrance'</em><br><br>GPS Density: 0.78 · High risk · Best visited after 21:30.`},
+    {type:"bot",text:`${IC.msgSquare} <strong>Night Bazaar Sentiment Report</strong><br>Analyzed 290 trace points · 55% positive / 25% neutral / 20% negative<br><br>${IC.thumbsUp} Main praise: <em>'Despite commercialization, the bazaar retains charm'</em><br>${IC.alertTri} Main complaints: <em>'Aggressive touts near main entrance'</em><br><br>GPS density: 0.78 · High risk · Best visited after 21:30.`},
   ],
 };
 
-/* ── Render POI cards ── */
+/* Render functions (same logic, just using translated data) */
 function renderPOIs(filter='all'){
   const grid = document.getElementById('poiGrid');
   grid.innerHTML = '';
   const filtered = filter==='all' ? POIS : POIS.filter(p=>p.risk===filter);
   filtered.forEach((poi,i)=>{
     const pct = Math.round(poi.density*100);
-    const riskLabel = poi.risk.replace('_',' ');
+    let riskLabel = '';
+    if(poi.risk === 'very_high') riskLabel = 'Very high risk';
+    else if(poi.risk === 'high') riskLabel = 'High risk';
+    else if(poi.risk === 'medium') riskLabel = 'Medium risk';
+    else riskLabel = 'Low risk';
     const card = document.createElement('div');
     card.className = `poi-card ${poi.risk}`;
     card.style.animationDelay = `${i*.05}s`;
@@ -1141,7 +1446,7 @@ function renderPOIs(filter='all'){
       </div>
       <div class="poi-meta">
         <span>${IC.clock} ${poi.dwell} min</span>
-        <span>${IC.mapPin} ${poi.tracks} tracks</span>
+        <span>${IC.mapPin} ${poi.tracks} traces</span>
       </div>`;
     grid.appendChild(card);
     setTimeout(()=>{
@@ -1157,7 +1462,6 @@ function filterPOIs(risk,btn){
   renderPOIs(risk);
 }
 
-/* ── Render sentiment ── */
 function renderSentiment(){
   const list = document.getElementById('sentimentList');
   SENTIMENT_POIS.forEach(poi=>{
@@ -1179,7 +1483,6 @@ function renderSentiment(){
   });
 }
 
-/* ── Render hit rates ── */
 function renderHitRates(){
   const wrap = document.getElementById('hitRates');
   HIT_RATES.forEach(hr=>{
@@ -1198,7 +1501,6 @@ function renderHitRates(){
   },500);
 }
 
-/* ── Render category bars ── */
 function renderCatBars(){
   const wrap = document.getElementById('catBars');
   CAT_RATES.forEach(c=>{
@@ -1215,7 +1517,6 @@ function renderCatBars(){
   });
 }
 
-/* ── Demo chat ── */
 const QUERY_LABELS = Object.keys(DEMO_SCENARIOS);
 let chatRunning = false;
 
@@ -1236,7 +1537,7 @@ async function runDemo(query,btn){
   document.querySelectorAll('.query-chip').forEach(b=>b.classList.remove('selected'));
   btn.classList.add('selected');
   const body = document.getElementById('chatBody');
-  body.innerHTML = `<div class="msg bot">สวัสดีครับ! I'm your Chiang Mai tourism assistant.<br>Ask me about crowd levels, sentiment, or where to visit. ${IC.building}</div>`;
+  body.innerHTML = `<div class="msg bot">สวัสดีครับ! I'm your Chiang Mai travel assistant.<br>Ask me about crowd density, visitor reviews, or place recommendations. ${IC.building}</div>`;
 
   const steps = DEMO_SCENARIOS[query];
   for(const step of steps){
@@ -1269,13 +1570,12 @@ async function runDemo(query,btn){
 
 function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-/* ── Pipeline highlight ── */
 function highlightPipe(el){
   document.querySelectorAll('.pipe-step').forEach(s=>s.classList.remove('active-step'));
   el.classList.add('active-step');
 }
 
-/* ── Custom cursor ── */
+/* Cursor & interactions */
 const cursor = document.getElementById('cursor');
 const ring = document.getElementById('cursor-ring');
 let mx=0,my=0,rx=0,ry=0;
@@ -1289,19 +1589,18 @@ function animRing(){
   requestAnimationFrame(animRing);
 }
 animRing();
-document.querySelectorAll('a,button,.poi-card,.filter-btn,.pipe-step,.rq-card,.stat-card').forEach(el=>{
+document.querySelectorAll('a,button,.poi-card,.filter-btn,.pipe-step,.rq-card,.stat-card,.map-poi-row').forEach(el=>{
   el.addEventListener('mouseenter',()=>{cursor.style.transform='scale(2.5)'; ring.style.transform='scale(1.5)';});
   el.addEventListener('mouseleave',()=>{cursor.style.transform='scale(1)'; ring.style.transform='scale(1)';});
 });
 
-/* ── Scroll reveal ── */
+/* Scroll reveal & nav dots */
 const observer = new IntersectionObserver(entries=>{
   entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
 },{threshold:.12});
 document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
 
-/* ── Nav dots ── */
-const sections = ['hero','problem','pipeline','density','sentiment','metrics','demo','closing'];
+const sections = ['hero','problem','pipeline','density','map-section','sentiment','metrics','demo','closing'];
 const dots = document.querySelectorAll('.nav-dot');
 dots.forEach((dot,i)=>{
   dot.addEventListener('click',()=>{
@@ -1314,7 +1613,6 @@ const secObs = new IntersectionObserver(entries=>{
       const idx = sections.indexOf(e.target.id);
       dots.forEach(d=>d.classList.remove('active'));
       if(idx>=0) dots[idx].classList.add('active');
-      /* Trigger hit rate bars when metrics section visible */
       if(e.target.id==='metrics'){
         setTimeout(()=>{
           document.querySelectorAll('.hit-bar').forEach(b=>{ b.style.width=b.dataset.width; });
@@ -1325,12 +1623,169 @@ const secObs = new IntersectionObserver(entries=>{
 },{threshold:.4});
 sections.forEach(id=>{ const el=document.getElementById(id); if(el) secObs.observe(el); });
 
-/* ── Init ── */
+/* POI images & map logic unchanged */
+const POI_IMAGES = {
+  "Sunday Walking Street": [
+    "https://image-tc.galaxy.tf/wijpeg-1563bag21idvzcvn77jl1irr0/sunday-walking-street-market-chiang-mai-thailand-2013-01-13-18-57-17_standard.jpg?crop=70%2C0%2C1060%2C795",
+    "https://apis.airportthai.co.th/microsite/images/post/ckeditor/2021-12-15-16-06-404-shutterstock_316883423.jpg",
+    "https://aramblingunicorn.com/wp-content/uploads/2022/12/Chiang-Mai-Sunday-Market-25.jpg"
+  ],
+  "Wat Doi Suthep": [
+    "https://www.tripsavvy.com/thmb/kN98fxIp48KGDa_kqSiCw8CWpoU=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/DoiSuthepPano1-1-5c1406eb46e0fb000168c8ba.jpg",
+    "https://i1.wp.com/letravels.com/wp-content/uploads/2018/11/img_6243-1.jpg?fit=1920%2C1280&ssl=1",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4fi3PgfWuWnkiLyR8ycxh_LqSTZpJQsZpZw&s"
+  ],
+  "Wat Phra Singh": [
+    "https://cdn1.citylife.group/tat2/wp-content/uploads/2022/05/%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%9E%E0%B8%A3%E0%B8%B0%E0%B8%AA%E0%B8%B4%E0%B8%87%E0%B8%AB%E0%B9%8C2-Wat-Pra-SIng2.jpg",
+    "https://www.placesofjuma.com/wp-content/uploads/2019/10/Chiang-Mai-17-scaled.jpg",
+    "https://mychiangmaitour.com/wp-content/uploads/2018/02/wat_phra_singh_chiang_rai01.jpg"
+  ],
+  "Wat Chedi Luang": [
+    "https://images.squarespace-cdn.com/content/v1/5438e2c6e4b0b18459a8ca06/1593080023687-2WNKQ64LB63VEV4UMVZ4/GTJ-2020-0625-39.jpg",
+    "https://images.squarespace-cdn.com/content/v1/5438e2c6e4b0b18459a8ca06/1593080275991-VH2IOY4XV4ZHMERVAQL0/GTJ-2020-0625-84.jpg",
+    "https://www.asiakingtravel.com/cuploads/files/wat-chedi-luang-3.jpg"
+  ],
+  "Nimmanhaemin Road": [
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_uoVw_dkFteD5rDaAPbCre3jyFWLVNVOOUA&s",
+    "https://www.mychiangmaitravel.com/wp-content/uploads/2017/07/nimmanhaemin-road01.jpg",
+    "https://goop-img.com/wp-content/uploads/2018/11/Nimmanhaemin-Road.jpg"
+  ],
+  "Night Bazaar": [
+    "https://api.tourismthailand.org/upload/live/business_content_thumbnail/12595/P06002139.jpeg",
+    "https://travelersanddreamers.com/wp-content/uploads/2023/05/chiang-mai-night-market-2-1024x678.jpg",
+    "https://images.trvl-media.com/place/6216344/705d1da8-c0bf-4e92-9778-6633b906d864.jpg"
+  ],
+  "Tha Phae Gate": [
+    "https://www.thainationalparks.com/img/package/2020/08/31/397017/two-chedis-w-900.jpg",
+    "https://www.pelago.com/img/products/TH-Thailand/doi-inthanon-national-park-village-tour/0404-0622_bharath-mohan-2cjonwjcmjm-unsplash.jpg",
+    "https://www.thainationalparks.com/img/poi/2019/12/10/394794/doi-inthanon-chiang-mai-thailand-sea-of-mist-w-900.jpg"
+  ],
+  "Doi Inthanon National Park": [
+    "https://www.thainationalparks.com/img/package/2020/08/31/397017/two-chedis-w-900.jpg",
+    "https://www.pelago.com/img/products/TH-Thailand/doi-inthanon-national-park-village-tour/0404-0622_bharath-mohan-2cjonwjcmjm-unsplash.jpg",
+    "https://www.thainationalparks.com/img/poi/2019/12/10/394794/doi-inthanon-chiang-mai-thailand-sea-of-mist-w-900.jpg"
+  ]
+};
+const DEFAULT_IMAGES = [
+  "https://itinari-images.s3.eu-west-1.amazonaws.com/activity/images/original/4e65281a-0d2f-4b3f-876b-1350621205fd-efesenko.jpg",
+  "https://storage.googleapis.com/tagthai-prd-content/Tha_Phae_Chiang_Mai_Activities_29fc240904/Tha_Phae_Chiang_Mai_Activities_29fc240904.jpg",
+  "https://thethaiger.com/wp-content/uploads/2024/08/Tha-Phae-Gate-1.jpg"
+];
+
+function showPOIPreview(poiIdx) {
+  const poi = POIS[poiIdx];
+  if (!poi) return;
+  const section = document.getElementById('poi-preview-section');
+  const titleEl = document.getElementById('poi-preview-title');
+  const titleEnEl = document.getElementById('poi-preview-title-en');
+  const img0 = document.getElementById('poi-img-0');
+  const img1 = document.getElementById('poi-img-1');
+  const img2 = document.getElementById('poi-img-2');
+  titleEl.textContent = poi.name;
+  titleEnEl.textContent = poi.cat;
+  const images = POI_IMAGES[poi.name] || DEFAULT_IMAGES;
+  img0.src = images[0] || DEFAULT_IMAGES[0];
+  img1.src = images[1] || DEFAULT_IMAGES[1];
+  img2.src = images[2] || DEFAULT_IMAGES[2];
+  section.classList.remove('active');
+  void section.offsetWidth;
+  section.classList.add('active');
+}
+
+let map;
+let markersList = [];
+
+function initInteractiveMap() {
+  map = L.map('poi-map').setView([18.7883, 98.9853], 13);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> & CartoDB',
+    subdomains: 'abcd',
+    maxZoom: 19,
+    minZoom: 10
+  }).addTo(map);
+  function getColorByDensity(density) {
+    if (density >= 0.8) return '#e03939';
+    if (density >= 0.6) return '#c8972a';
+    return '#2d6a4f';
+  }
+  POIS.forEach((poi, idx) => {
+    const color = getColorByDensity(poi.density);
+    const radius = 8 + Math.floor(poi.density * 8);
+    const circleMarker = L.circleMarker([poi.lat, poi.lng], {
+      radius: radius,
+      fillColor: color,
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.85
+    });
+    const popupContent = `
+      <div class="poi-popup">
+        <div class="poi-popup-name">${poi.name}</div>
+        <div class="poi-popup-en">${poi.cat}</div>
+        <div class="poi-popup-grid">
+          <div class="poi-popup-stat">
+            <div class="poi-popup-val" style="color:${color}">${Math.round(poi.density*100)}%</div>
+            <div class="poi-popup-lbl">GPS Density</div>
+          </div>
+          <div class="poi-popup-stat">
+            <div class="poi-popup-val">${poi.dwell} min</div>
+            <div class="poi-popup-lbl">Avg dwell</div>
+          </div>
+          <div class="poi-popup-stat">
+            <div class="poi-popup-val">${poi.sentiment || '—'}%</div>
+            <div class="poi-popup-lbl">Positive</div>
+          </div>
+          <div class="poi-popup-stat">
+            <div class="poi-popup-val">${poi.time || '—'}</div>
+            <div class="poi-popup-lbl">Peak hours</div>
+          </div>
+        </div>
+      </div>
+    `;
+    circleMarker.bindPopup(popupContent);
+    circleMarker.addTo(map);
+    markersList.push({ marker: circleMarker, idx: idx, data: poi });
+    circleMarker.on('click', () => { showPOIPreview(idx); });
+    if (poi.density >= 0.8) {
+      L.circleMarker([poi.lat, poi.lng], {
+        radius: radius + 5,
+        fillColor: 'transparent',
+        color: color,
+        weight: 1.5,
+        opacity: 0.4,
+        fillOpacity: 0,
+        interactive: false
+      }).addTo(map);
+    }
+  });
+  const poiRows = document.querySelectorAll('.map-poi-row');
+  poiRows.forEach((row, idx) => {
+    row.addEventListener('click', () => {
+      const poiIdx = parseInt(row.getAttribute('data-poi-idx'), 10);
+      if (!isNaN(poiIdx) && markersList[poiIdx]) {
+        const targetMarker = markersList[poiIdx];
+        map.flyTo([targetMarker.data.lat, targetMarker.data.lng], 15, { duration: 1.2 });
+        setTimeout(() => targetMarker.marker.openPopup(), 1300);
+        poiRows.forEach(r => r.style.background = '');
+        row.style.background = 'rgba(200,151,42,.15)';
+        showPOIPreview(poiIdx);
+      }
+    });
+  });
+}
+
 renderPOIs();
 renderSentiment();
 renderHitRates();
 renderCatBars();
 renderQueryChips();
+
+if (typeof L !== 'undefined') {
+  setTimeout(initInteractiveMap, 300);
+} else {
+  window.addEventListener('load', () => setTimeout(initInteractiveMap, 500));
+}
 </script>
 </body>
 </html>
